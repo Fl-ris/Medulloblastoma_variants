@@ -1,0 +1,28 @@
+---
+title: "Meduloblastoma"
+author: "Yamila Timmer en Floris Menninga"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 2
+  pdf_document:
+    toc: yes
+    toc_depth: '2'
+  word_document:
+    toc: yes
+    toc_depth: '2'
+---
+
+```{r libraries, results='hold', message=FALSE, warning=FALSE}
+# Libraries
+library(tidyverse)
+library(ggplot2)
+
+```
+
+## **Inleiding:**
+
+## **Variant analyse:**
+
+## **Data visualisatie:** 
