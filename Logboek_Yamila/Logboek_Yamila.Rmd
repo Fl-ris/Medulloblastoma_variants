@@ -14,8 +14,11 @@ editor_options:
   markdown: 
     wrap: 72
 ---
+```{r}
+library(dplyr)
 
-# Week 1
+```
+# Voorbereiding
 
 ## Het doel/opzet van de cursus
 
@@ -34,8 +37,8 @@ Vragen die wij willen onderzoeken zijn o.a.;
 
 -   Welke SNP's er voorkomen bij medulloblastomen,
 
--   Welke tools wij het beste voor deze analyse kunnen gebruiken in Galaxy.
-
+-   Welke tools wij het beste voor deze analyse kunnen gebruiken in
+    Galaxy.
 
 Voor deze analyse zullen wij de medulloblastoom DNA-seq data (MB-DNASeq)
 gebruiken. Deze is terug te vinden op het BIN-netwerk in de volgende
@@ -122,18 +125,17 @@ Bestanden in te laden - Tools te gebruiken (datamash, intersect
 intervals, sort, select first, compare two datasets) - Een history om te
 zetten naar een workflow
 
-## Quality Control met Galaxy
+# Quality Control met Galaxy
 
-### Input
+## Input
 
 Forward en reverse read van sample 5:
 
-- SRR26913194_1.fastq 
-- SRR26913194_2.fastq
-
+-   SRR26913194_1.fastq
+-   SRR26913194_2.fastq
 
 | Input Parameter                                                     | Value                     |
-|---------------------------------------------------------------------|---------------------------|
+|-------------------------------------------------|-----------------------|
 | Raw read data from your current history                             | 1: SRR26913194_1.fastq.gz |
 | Contaminant list                                                    |                           |
 | Adapter list                                                        |                           |
@@ -143,7 +145,7 @@ Forward en reverse read van sample 5:
 | Length of Kmer to look for                                          | 7                         |
 
 | Input Parameter                                                     | Value                     |
-|---------------------------------------------------------------------|---------------------------|
+|-------------------------------------------------|-----------------------|
 | Raw read data from your current history                             | 1: SRR26913194_2.fastq.gz |
 | Contaminant list                                                    |                           |
 | Adapter list                                                        |                           |
@@ -152,53 +154,19 @@ Forward en reverse read van sample 5:
 | Lower limit on the length of the sequence to be shown in the report | Not available.            |
 | Length of Kmer to look for                                          | 7                         |
 
+## Output
 
-### Output 
+-   Webpage
+-   Raw data
 
-- Webpage
-- Raw data
+## Trimmomatic
 
-### Resultaten
-
-#### Basic statistics
-
-![Basic statistics uit FastQC Report, forward read](SRR26913194_1_FASTQ_1st_run.png){width=400px}
-![Basic statistics uit FastQC Report, reverse read](SRR26913194_2_FASTQ_1st_run.png){width=400px}
-
-De basic statistics tussen de forward en reverse read lijken sterk met elkaar overeen te komen, op 1 onderdeel na, zo is het GC-gehalte bij de reverse read 1% lager en verwacht ik dat de GC-gehalte normaalverdeling bij de reverse read meer zal afwijken dan de forward read.
-
-#### Summary
-Wat opvalt in de summary van het FASTQC rapport voor zowel SRR26913194_1 als SRR26913194_2, is dat er een failure wordt gegeven bij '*per sequence GC content*' en een warning bij '*sequence duplication levels*'. Om te kijken wat dit betekent, ga ik kijken naar de documentatie van FASTQC.
-
-
-![Summary uit FastQC Report, forward read](result_SRR26913194_1_1st_run.png)
-
-![Summary uit FastQC Report, reverse read](result_SRR26913194_2_1st_run.png) 
-
-#### Per sequence GC content
-FASTQC meet het GC-gehalte van de gehele sequentie in een bestand en vergelijkt dit met een gemodelleerde normaalverdeling van het GC-gehalte. In een willekeurige library wordt er verwacht dat er ongeveer een normaalverdeling is van het GC-gehalte. Wanneer dit niet het geval is, en er een afwijkende vorm te zien is, kan dit wijzen op een probleem met de library. Een scherpe piek op de verdeling kan een gevolg zijn van een specifieke contaminant (bijv. van adapters), een bredere piek kan duiden op contaminatie met een andere soort. Een failure bij dit onderdeel houdt in dat de totale deviatie van de normaalverdeling gelijk is aan meer dan 30% van de reads [@FASTQC].
-
-Bij het vergelijken van figuur .. en figuur .. met elkaar, valt het op dat de reverse read meer afwijkt van de normaalverdeling, zoals ik had verwacht. De reverse read lijkt 2 pieken te hebben.
-
-![GC-gehalte uit FastQC Report, forward read](SRR26913194_1_GC_content_1st_run.png)
-
-![GC-gehalte uit FastQC Report, reverse read](SRR26913194_2_GC_content_1st_run.png)
-
-#### Sequence duplication levels
-
-Normaal horen sequenties maar één keer voor te komen in de uiteindelijke dataset, een lage hoeveelheid aan duplicaties van sequenties duidt op een hoge coverage van de target sequentie, maar een hoge hoeveelheid aan duplicaties kan het gevolg zijn van een bias. Deze module telt het aantal duplicaten voor elke sequentie in een library en maakt hiervan een plot, met het percentage van de sequentie en de bijbehorende hoeveelheid duplicaten. Hierbij Kijkt het alleen naar de eerste 100.000 sequenties van de data om geheugen te besparen, omdat dit genoeg is om een goed beeld te vormen. Dit onderdeel laat een warning zien als meer dan 20% van de data bestaat uit niet-unieke sequenties[@FASTQC]. 
-
-Figuur .. en figuur .. lijken sterk op elkaar, bij beiden is er sprake van een piek bij sequence duplication level = >10. Een duidelijk verschil is dat het percentage overblijvende sequenties na dedupliceren 60.49% is voor de reverse read en 58.99% bij de forward read. Dit betekent dat de forward read 1.50% meer sequentie duplicaties heeft dan de reverse read.
-
-![Sequence Duplication Levels uit FastQC Report, forward read](SRR26913194_1_sequence_duplication_levels_1st_run.png)
-
-![Sequence Duplication Levels uit FastQC Report, reverse read](SRR26913194_2_sequence_duplication_levels_1st_run.png)
-
-
-Om de kwaliteit van de reads te verhogen maak ik gebruik van de Trimmomatic tool, deze pas ik toe op SRR26913194_1.fastq.gz en SRR26913194_2.fastq.gz (paired-end), met de volgende parameters:
+Om de kwaliteit van de reads te verhogen maak ik gebruik van de
+Trimmomatic tool, deze pas ik toe op SRR26913194_1.fastq.gz en
+SRR26913194_2.fastq.gz (paired-end), met de volgende parameters:
 
 | Input Parameter                                                                                         | Value                                       |
-|--------------------------------------------------|----------------------|
+|-----------------------------------------------|------------------------|
 | Single-end or paired-end reads?                                                                         | pair_of_files                               |
 | Input FASTQ file (R1/first of pair)                                                                     | 1: SRR26913190_1.fastq.gz                   |
 | Input FASTQ file (R2/second of pair)                                                                    | 2: SRR26913190_2.fastq.gz                   |
@@ -224,7 +192,243 @@ De 'operations' die ik heb ingesteld zijn:
     heen, wanneer de gemiddelde kwaliteit binnen deze window lager is
     dan een Phred-score van 20, knipt hij de read en houdt hij het stuk
     met de hoogste kwaliteit.
-    
--   **MINLEN**: behoudt de read niet wanneer deze korter is dan 40 (aangegeven MINLEN voor data met reads van 75bp).
+
+-   **MINLEN**: behoudt de read niet wanneer deze korter is dan 40
+    (aangegeven MINLEN voor data met reads van 75bp).
+
+```{r}
+paste("Verwijderde reads door Trimmomatic: ", 21866605-20877004)
+```
+
+## Resultaten
+
+### Basic statistics
+
+![Basic statistics uit FastQC Report, forward
+read](SRR26913194_1_FASTQ_1st_run.png){width="400px"} ![Basic statistics
+uit FastQC Report, reverse
+read](SRR26913194_2_FASTQ_1st_run.png){width="400px"}
+
+De basic statistics tussen de forward en reverse read lijken sterk met
+elkaar overeen te komen, op 1 onderdeel na, zo is het GC-gehalte bij de
+reverse read 1% lager en verwacht ik dat de GC-gehalte normaalverdeling
+bij de reverse read meer zal afwijken dan de forward read.
+
+![Per base sequence quality voor SRR26913194_1, vóór het
+trimmen](SRR26913194_1_FASTQ_base_quality.png) ![Per base sequence
+quality voor SRR26913194_1, na het
+trimmen](SRR26913194_1_FASTQ_base_quality_trimmed.png) Wat gelijk opvalt
+is dat de algehele kwaliteit is verbeterd, dit is te zien aan dat veel
+van de "boxplots" zijn vervangen door een lijn. De "boxplots" in dit
+geval bestaan slechts uit de strepen voor de 10% and 90% punten, maar
+zijn in de getrimde data vrijwel geheel vervangen door een enkele
+horizontale lijn. Alleen aan het begin van de data en aan het einde is
+te zien dat de data nog van iets mindere kwaliteit is.
+
+Voor de reverse read geldt hetzelfde:
+
+![](SRR26913194_2_FASTQ_base_quality.png)
+
+![](SRR26913194_2_FASTQ_base_quality_trimmed.png)
+
+### Summary
+
+Wat opvalt in de summary van het FASTQC rapport voor zowel SRR26913194_1
+als SRR26913194_2, is dat er een failure wordt gegeven bij '*per
+sequence GC content* en een warning bij *sequence duplication levels*'.
+Om te kijken wat dit betekent, ga ik kijken naar de documentatie van
+FASTQC.
+
+![Summary uit FastQC Report, forward
+read](result_SRR26913194_1_1st_run.png)
+
+![Summary uit FastQC Report, reverse
+read](result_SRR26913194_2_1st_run.png)
+
+### Per sequence GC content
+
+FASTQC meet het GC-gehalte van de gehele sequentie in een bestand en
+vergelijkt dit met een gemodelleerde normaalverdeling van het
+GC-gehalte. In een willekeurige library wordt er verwacht dat er
+ongeveer een normaalverdeling is van het GC-gehalte. Wanneer dit niet
+het geval is, en er een afwijkende vorm te zien is, kan dit wijzen op
+een probleem met de library. Een scherpe piek op de verdeling kan een
+gevolg zijn van een specifieke contaminant (bijv. van adapters), een
+bredere piek kan duiden op contaminatie met een andere soort. Een
+failure bij dit onderdeel houdt in dat de totale deviatie van de
+normaalverdeling gelijk is aan meer dan 30% van de reads [@FASTQC].
+
+Bij het vergelijken van figuur .. en figuur .. met elkaar, valt het op
+dat de reverse read meer afwijkt van de normaalverdeling, zoals ik had
+verwacht. De reverse read lijkt 2 pieken te hebben.
+
+Het GC-percentage is echter niet iets dat met Trimmomatic verbeterd kan
+worden en wordt puur door de sequentie-data zelf veroorzaakt. Mogelijk
+wordt deze afwijking in GC-percentage veroorzaakt door het gebruikte
+genpanel.
+
+![GC-gehalte uit FastQC Report, forward
+read](SRR26913194_1_GC_content_1st_run.png)
+
+![GC-gehalte uit FastQC Report, reverse
+read](SRR26913194_2_GC_content_1st_run.png)
+
+### Sequence duplication levels
+
+Normaal horen sequenties maar één keer voor te komen in de uiteindelijke
+dataset, een lage hoeveelheid aan duplicaties van sequenties duidt op
+een hoge coverage van de target sequentie, maar een hoge hoeveelheid aan
+duplicaties kan het gevolg zijn van een bias. Deze module telt het
+aantal duplicaten voor elke sequentie in een library en maakt hiervan
+een plot, met het percentage van de sequentie en de bijbehorende
+hoeveelheid duplicaten. Hierbij Kijkt het alleen naar de eerste 100.000
+sequenties van de data om geheugen te besparen, omdat dit genoeg is om
+een goed beeld te vormen. Dit onderdeel laat een warning zien als meer
+dan 20% van de data bestaat uit niet-unieke sequenties[@FASTQC].
+
+Figuur .. en figuur .. lijken sterk op elkaar, bij beiden is er sprake
+van een piek bij sequence duplication level = \>10. Een duidelijk
+verschil is dat het percentage overblijvende sequenties na dedupliceren
+60.49% is voor de reverse read en 58.99% bij de forward read. Dit
+betekent dat de forward read 1.50% meer sequentie duplicaties heeft dan
+de reverse read.
+
+![Sequence Duplication Levels uit FastQC Report, forward
+read](SRR26913194_1_sequence_duplication_levels_1st_run.png)
+
+![Sequence Duplication Levels uit FastQC Report, reverse
+read](SRR26913194_2_sequence_duplication_levels_1st_run.png)
+
+# Coverage berekenen
+
+-   minimale coverage moet 20 zijn, anders is het moeilijk om
+    onderscheid te maken tussen een variant en een sequencing error
+-   readlengte hangt af van de dataset, in dit geval is het 75x2
+-   het menselijk genoom is 3,137,161,264 bases, maar omdat er gebruik
+    is gemaakt van een genpanel wordt er naar 'slechts' 1,000,000 basen
+    gekeken.
+
+De verwachte coverage kan worden berekend met de Lander/Waterman
+formule:
+
+C = LN / G
+
+C: coverage L: readlengte N: aantal reads G: captured region
+
+De readlengte (L) is 2x75, ofwel 150 Het aantal reads (N) is wat er is
+overgebleven na gebruik van Trimmomatic, dat zijn er in dit geval
+20877004 De captured region (G) is het aantal basenparen in het
+gebruikte genpanel, dit zijn er 1,000,000
+
+```{r}
+C <- (2 * 75) * 20877004 / 1000000
+paste("De coverage is:", C)
+```
+
+-   Coverage = 20
+-   Readlengte = 300
+-   Aantal reads = 25000000
+-   Captured region (genpanel) = 1000000
+
+```{r}
+C <- 20
+L <- 300
+G <- 1000000
+N <- 25000000
+n <- (L * N) / C
+
+paste("Aantal patienten die kunnen worden gesequenced:", n / G)
+```
+
+# BWA
+
+| Input Parameter                                                               | Value                                                |
+|------------------------------------------|------------------------------|
+| Will you select a reference genome from your history or use a built-in index? | cached                                               |
+| Using reference genome                                                        | hg38                                                 |
+| Select input type                                                             | paired                                               |
+| Select first set of reads                                                     | 7: Trimmomatic on SRR26913194_1.fastq.gz (R1 paired) |
+| Select second set of reads                                                    | 8: Trimmomatic on SRR26913194_1.fastq.gz (R2 paired) |
+| Set advanced paired end options?                                              | do_not_set                                           |
+| Set read groups information?                                                  | do_not_set                                           |
+| Select analysis mode                                                          | illumina                                             |
+
+# Duplicate reads
+
+Technische duplicaten moeten worden gemarked voordat de mapping plaats
+kan vinden. Dit heb ik met behulp van de 'Mark Duplicates' tool gedaan.
+De tool voegt een 'flag' toe aan de duplicates (en verwijderd deze dus
+niet!), zodat andere tools de duplicates zullen negeren.
+
+| Input Parameter                                                                                                            | Value                                                              |
+|----------------------------------------------|--------------------------|
+| Select SAM/BAM dataset or dataset collection                                                                               | 14: Map with BWA on data 8 and data 7 (mapped reads in BAM format) |
+| If true do not write duplicates to the output file instead of writing them with appropriate flags set                      | 0                                                                  |
+| Assume the input file is already sorted                                                                                    | 0                                                                  |
+| The scoring strategy for choosing the non-duplicate among candidates                                                       | SUM_OF_BASE_QUALITIES                                              |
+| Regular expression that can be used in unusual situations to parse non-standard read names in the incoming SAM/BAM dataset | Empty.                                                             |
+| The maximum offset between two duplicte clusters in order to consider them optical duplicates                              | 100                                                                |
+| Barcode Tag                                                                                                                | Not available.                                                     |
+| Select validation stringency                                                                                               | Lenient                                                            |
+
+# IGV
+
+Met behulp van IGV ga ik opzoek naar een variant in een gen dat ik heb gekozen uit het genpanel, namelijk ABL1. 
 
 
+**Gegevens gevonden variant**:
+
+```
+chr9:130.885.614
+Total count: 926
+A : 502 (54%, 266+, 236- )
+C : 1 (0%, 1+, 0- )
+G : 423 (46%, 244+, 179- )
+T : 0
+N : 0
+```
+De patiënt is heterozygoot voor het allel voor dit gen, dit is te zien aan dat zowel de base A, als T ongeveer 50% voorkomen. De variant bevindt zich aan een exon, dit is te zien aan dat er een bijbehorende referentiesequentie wordt weergegeven onder de data van de patiënt.
+
+Het variant codeert normaal, volgens de referentiesequentie, samen met 2 andere basen (samen CCA) voor het aminozuur proline. Bij de data van de patiënt komen 2 verschillende sequenties voor, namelijk CCA en CCG. Zowel CCG als CCA coderen voor het aminozuur proline, er is dus sprake van een silent of 'synonymous' mutatie. 
+
+
+![Overzicht van het gevonden variant in gen ABL1, in IGV](igv_variant.png)
+
+# Analyse van varianten
+
+Soorten files:
+- BED-file: beschrijft de locaties van de exons
+- BAM-file: bevat de gemapte reads
+- VCF-file: bevat alle gevonden varianten
+
+Inladen BED-data
+```{r exons_per_chromosome_barplot}
+bed_data <- read.table("Galaxy21-[medulloblastoma_gene_panel_V3_ucsc.bed].bed")
+
+names(bed_data) <- c("chrom", "chromStart", "chromEnd", "gene")
+
+(exons_per_chromosome <- table(bed_data$chrom))
+
+barplot(exons_per_chromosome, las = 2, ylab = "Number of exons", xlab = "Chromosome")
+
+
+```
+
+Uit bovenstaande plot is de verdeling van exonen per chromosoom te zien, hierbij valt op dat chromosoom 9 en 12 de meeste exonen hebben.
+
+
+```{r}
+# Maakt een dataframe van alleen de kolommen 'chrom' en 'gene' van bed_data
+chrom_gene <- bed_data[c("chrom", "gene")]
+
+# Behoudt slechts één van de genrijen per uniek gen op het chromosoom
+(unique_genes <- unique(chrom_gene) )
+
+# Maakt een tabel van de data, zodat dit kan worden gebruikt voor de barplot
+gene_count <- table(unique_genes$chrom)
+
+
+barplot(gene_count, las = 2, ylab = "Number of genes", xlab = "Chromosome")
+
+```
+Uit bovenstaande figuur kan het aantal genen per chromosoom worden afgelezen. Hieruit blijkt dat zowel chromosoom 12 als chromosoom 9 relatief veel genen bevatten, dit was te verwachten aan de hand van de resultaten uit de eerdere grafiek met de exonen. Echter blijkt dat ook chromosoom 1 relatief veel genen bevat, terwijl dit minder exonen had dan chromosoom 9 en 12. Dit kan te verklaren zijn doordat chromosoom 1 misschien genen bevat met relatief weinig exonen.
