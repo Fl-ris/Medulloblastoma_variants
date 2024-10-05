@@ -3,12 +3,12 @@ title: "Logboek Medulloblastoma"
 author: "Floris Menninga"
 date: "`r Sys.Date()`"
 output:
-  html_document:
-    toc: yes
-    toc_depth: 2
   pdf_document:
     toc: yes
     toc_depth: '2'
+  html_document:
+    toc: yes
+    toc_depth: 2
   word_document:
     toc: yes
     toc_depth: '2'
@@ -18,6 +18,8 @@ output:
 # Libraries
 library(tidyverse)
 library(GenomicRanges)
+library(plotrix)  
+library(Rsamtools)
 
 ```
 
@@ -102,6 +104,10 @@ De minimale read lengte aangepast van 40 naar 70bp.
 Het aantal reads voor het trimmen van SRR26913194 is 21866605, er na 18248538. Er zijn dus 3618067 reads weggehaald.
 Coverage: (150×18248538)÷1000000 = 2737x
 
+Hoeveel patienten kunnen gesequenced worden met een minimale covarage van 20x? 
+G = (300 * 25000000) / 20 = 375000000
+375000000 / 1000000 = 375 mensen (medulloblastoma gene panel is 1000000 bases)
+
 **Mappen met BWA**
 SRR26913194 is gemapped met Human reference hg38.
 
@@ -121,49 +127,54 @@ df <- read.table(file='/home/floris/Documenten/Data_set/Medulloblastoma/medullob
 
 names(df) <- c("Chromosome", "Start", "End", "Gene")
 
+
 ```
 In de bovenstaande R chunk wordt een dataframe gemaakt op basis van het .bed bestand. Daarna krijgen de kolomen betere namen i.p.v. V1, V2, etc. 
 
-
+**3.1.2 Assignment 2; BED-visualization**
 ```{r Aantal_exons_per_chromosoom}
+#genes_per_chromosome <- table(unique(df$Gene, df$Chromosome))
+#genes_per_chromosome <- unique(df$Gene, df$Chromosome)
+#unique_genes_per_chrom
+#unique_genes_per_chrom <- unique(df$Chromosome, df$Gene)
 
-chr_count <- (table(df$Chromosome))
+#genes_counts_per_chrom <- table(unique_genes_per_chrom )
+
+#barplot(genes_counts_per_chrom, las = 2, ylab="Number of Genes")
+#chr_count <- unique(table(df$Chromosome))
+#chr_count
 
 exon_count <- df %>% 
   group_by(Chromosome) %>%
   summarise(n())
 
 names(exon_count) <- c("Chromosome", "Count")
+
 print(exon_count)
+
 
 ```
 
 
-```{r}
+```{r exon_count_plot}
 library(ggplot2)
 
 ggplot(data = exon_count, mapping = aes(x = Chromosome, y = Count)) +
-  geom_bar(stat = "identity", fill="red", alpha=0.6) +
+  geom_bar(stat = "identity", fill="red", alpha=0.8) +
   coord_flip() +
   ylab(label = "Aantal exons") +
-  xlab(label = "Chromosoom")
+  xlab(label = "Chromosoom") +
   theme_minimal()
 
 ```
 Op het bovenstaande barplot staan de aantallen exons per chromosoom. 
 
-```{r}
-genes_per_chromosome <- table(unique(df$Gene, df$Chromosome))
-genes_per_chromosome
-```
 
 
-**TODO:**
- 3.1.2 Assignment 2; BED-visualization
- Visualize the number of genes per chromosome 
- 
+**3.1.3 Assignment 3; Bioconductor**
+
  Op de onderstaande chunk worden alle regels die het gen TSC2 bevatten geprint. 
- 
+
 ```{r IRanges_Test}
 #df[df$Gene == "TSC2", ]
 
@@ -188,36 +199,168 @@ granges
 
 ```
 
-```{r GRanges_lijst}
 
-genes = list()
+```{r print_gene_names}
+bed_splitted <- split(df, df$Gene)
+#head(bed_splitted)
+for (gene in names(bed_splitted)[1:10]) {
+    print(gene)
+}
+```
+Split op gen naam en print daarna de namen.
 
-#for (gen in df$Gene)
-#  genes[gen] <- IRanges(start = gen$Start,
-#                  end = gen$End,
-#                  names = gen$Gene)
 
+```{r GRangelist_for_loop}
 
+bed_granges_list <- list()
+
+for (gene_name in names(bed_splitted)) {
+  # Kijk welk element op "gene_name" rij in het gesplite dataframe zit:
+  gene_data <- df[df$Gene == gene_name, ]
+  # Maak IRange object met begin en eind coordinaten van features:
+  ranges <- IRanges(start = gene_data$Start,
+                    end = gene_data$End,
+                    names = gene_data$Gene)
+
+  # Maak Grange object met extra informatie:
+  granges_gene <- GRanges(seqnames = gene_data$Chromosome, 
+                          ranges = ranges)
   
-# Voor het aantal rows in het df:
-genes <- lapply(seq_len(nrow(df)), function(i) {
-    # Voer de volgende functie uit:
-  IRanges(start = df$Start[i],
-          end = df$End[i],
-          names = df$Gene[i])})
+  # Voeg het Grangelist object toe aan de lijst:
+  bed_granges_list[[gene_name]] <- granges_gene
+  
+  
+  
+  # Print de lengte van het gen:
+ cat("Length of",gene_name, sum( width(ranges) ), "bp", "\n")
+  
+}
+
+# Zet om naar Grangelist...
+bed_data_GRangesList <- GRangesList(bed_granges_list)
+
+head(bed_data_GRangesList)
+```
+
+```{r datatype_check}
+class(bed_data_GRangesList)
+elementType(bed_data_GRangesList)
+```
+Volgens de class() en de elementType() functies is de lijst nu een "CompressedGRangesList"
 
 
-# Voor het aantal rows in het df:
-genes <- lapply(seq_len(nrow(df)), function(i) {
-  # Voer de volgende functie uit:
-  GRanges(seqnames = df$Chromosome[i], ranges = ranges)})
+**3.1.4 Assignment 4; Gene Lengths**
+
+```{r hist_gene_lenghts}
+gene_lengths <-  sapply(bed_granges_list, function(x) sum(width(ranges(x))))
+
+hist(gene_lengths)
+```
 
 
+```{r gene_lengths_gap}
+
+
+#for (i in bed_granges_list) {
+#  gene_lengths[i] <- sum(width(ranges([i]))
+#  
+#}
+#gene_lengths <- function(x) sum(width(ranges(x)))
+
+gap.barplot(gene_lengths, ylab="Gene Length (bp)", las=2, gap=c(15000,19000))
+
+```
+## **Data visualisatie:** 
+
+
+```{r}
 
 
 ```
-In de bovenstaande chunk wordt gebruik gemaakt van lappy of over het df te loopen en een functie uit te voeren voor elke rij. Eerst IRanges dan GRanges.
+**3.1.5 Assignment 5; Loading the Mapped Reads** 
+
+
+```{r pileup}
+bam_df <- BamFile("/home/floris/Documenten/Data_set/Medulloblastoma/Bam/Galaxy5-[MarkDuplicates_on_data_1__MarkDuplicates_BAM_output].bam", index="/home/floris/Documenten/Data_set/Medulloblastoma/Bam/Galaxy5-[MarkDuplicates_on_data_1__MarkDuplicates_BAM_output].bai")
+
+ABL1 <- bed_data_GRangesList[["ABL1"]]
+
+param <- ScanBamParam(which = ABL1)
+
+pileup_abl1 <- pileup(bam_df, index = "/home/floris/Documenten/Data_set/Medulloblastoma/Bam/Galaxy5-[MarkDuplicates_on_data_1__MarkDuplicates_BAM_output].bai", scanBamParam = param)
+
+head(pileup_abl1, n = 5)
+
+```
+```{r pileup_for_loop}
+pileup_list <- list()
+
+for (i in names(bed_data_GRangesList)) {
+  # Pak huidige gen:
+  gene <- bed_data_GRangesList[[i]]
+  # Maak ScanBamParam object met gen
+  param <- ScanBamParam(which = gene)
+  # Voer pileup uit voor gen
+  pileup_test <- pileup(bam_df, index =     "/home/floris/Documenten/Data_set/Medulloblastoma/Bam/Galaxy5-[MarkDuplicates_on_data_1__MarkDuplicates_BAM_output].bai", scanBamParam = param)
+  
+   # Voeg pileup toe aan lijst:
+   pileup_list[[i]] <- pileup_test
+
+}
+
+
+head(pileup_list)
+```
+
+
+**Assignment 7: Coverage Calcuation and reporting**
+
+```{r coverage}
+
+coverage = aggregate(x = list(count=pileup_test$count), 
+                     by = list(pos=pileup_test$pos), FUN=sum)
+head(coverage)
+```
+
+
+```{r}
+
+coverage_df <- data.frame()
+
+for (i in names(pileup_list)) {
+#  testlist <- rbind(testlist, list(Gene=i, Pos=pileup_list[[i]]$pos, Count=0))
+
+  test = aggregate(x = list(count=pileup_list[[i]]$count), 
+                     by = list(pos=pileup_list[[i]]$pos), FUN=sum)
+# testlist <- rbind(testlist, cov=test, gene=i) 
+  
+  # Gemiddelde van de counts:
+  mean_count <- mean(test$count)
+  # Minimum count aantal per gen:
+  min_count <- min(test$count)
+  
+  # Filter alle readcounts < 30 er uit:
+  covarage_below_30 <- test %>% 
+  filter(count < 30)  
+  
+    # Aantal basen die gesequenced zijn:
+  base_count <- length(test$pos)
+  # Min count percentage:
+  coverage_percentage <- (min_count / base_count) * 100
+    
+  
+  coverage_df <- rbind(coverage_df, list(Gene=i, Pos=test$pos[1], Avarage_coverage=mean_count, Amount_of_bases_seqenced=base_count, min_coverage=min_count, low_coverage_perc=coverage_percentage))
+  
+}
+
+# Laat de genen zijn met low coverage percentage boven de 10%.
+top3 <- coverage_df %>% 
+  filter(low_coverage_perc > 10)
+top3
+```
+
+## Week 4 Finding and Annotating Variants ##
 
 
 
-## **Data visualisatie:** 
+
