@@ -771,6 +771,7 @@ overlaps <- data.frame(findOverlaps(variant_granges, gene_list))
 # Rijen die na filterstappen zijn overgebleven (dus varianten die voorkomen in exonen én een allele frequency van hoger dan 30% heeft), de +17 is om rekening te houden met de header lines
 intersect_rows <- intersect(overlaps$queryHits, which(variant_granges$AF >= 0.3))+17
 
+
 ```
 
 ```{r}
@@ -955,19 +956,23 @@ genes_freq$gene <- genes[genes_freq$gene]
 ```
 
 ```{r}
-features <- bed_data[bed_data$gene == "CDK6", ]
+
+features <- gene_list[["FGFR4"]]
 overlaps$Gene <- names(gene_list)[overlaps$subjectHits]
 
-sample.gr <- variants_filtered[unlist(subset(overlaps, Gene == "CDK6", select = queryHits))]
+sample.gr <- variant_granges[unlist(subset(overlaps, Gene == "FGFR4", select = queryHits))]
+
 
 sample.gr$score <- sample.gr$AF * 100
 ```
 
 ```{r}
+
 lolliplot(sample.gr, features, ylab = "Allele Frequency (%)")
 
 ```
 
+lollipopplot met gefilterd en niet gefilterd, maar gefilterd highlighten
 
 https://www.tandfonline.com/doi/full/10.2217/fnl-2018-0030#:~:text=The%20most%20prevalent%20among%20those,not%20exclusive%20to%20WNT%20MB.
 
