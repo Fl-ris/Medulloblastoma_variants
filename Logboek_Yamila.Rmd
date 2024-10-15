@@ -1,0 +1,86 @@
+---
+title: "Logboek_Yamila_Medulloblastoma"
+author: "Yamila Timmer"
+date: "2024-09-18"
+output: html_document
+---
+
+Mahapatra S, Amsbaugh MJ. Medulloblastoma. [Updated 2023 Jun 26]. In: StatPearls [Internet]. Treasure Island (FL): StatPearls Publishing; 2024 Jan-. Available from: https://www.ncbi.nlm.nih.gov/books/NBK431069/
+
+# Week 1
+# Vrijdag 13-09-2024
+Vandaag ben ik aan de slag gegaan met een Galaxy tutorial, om bekend te raken met de workflow environment. De tutorial die ik hiervoor heb gebruikt is 'Galaxy Basics for genomics', van de volgende website: https://galaxyproject.github.io/training-material/topics/introduction/tutorials/galaxy-intro-101/tutorial.html
+
+In deze tutorial heb ik geleerd om:
+- Een history aan te maken
+- Bestanden in te laden
+- Tools te gebruiken (datamash, intersect intervals, sort, select first, compare two datasets)
+- Omzetten van history naar workflow
+
+
+Ook heb ik informatie opgezocht over medulloblastomen, om te achterhalen wat deze aandoening inhoudt, op wie het vooral effect heeft en waarom het belangrijk is om hier onderzoek naar te doen. 
+
+Medulloblastomen vormen de meestvoorkomende maligne hersentumor in kinderen, namelijk bijna 20%. Medullablastomen zijn een embryonale neuroepitheliale tumor in het cerebellum.
+
+
+
+Medulloblastoma is the most common malignant brain tumor in children, constituting nearly 20 percent of all pediatric brain tumors. It is categorized as an embryonal neuroepithelial tumor of the cerebellum. Surgical resection followed by radiation and chemotherapy are the mainstay of therapy, with five-year survival rates ranging between 20 and 100 percent. This wide range is multifactorial, owing in part to age at diagnosis, presence of metastases at diagnosis, subgroup variant of medulloblastoma, and concurrent cytogenetic abnormalities including copy-number variations. Regardless of long-term survival, treatment-related cognitive, neurologic, and endocrinologic effects remain a debilitating concern and an impetus for research for additional therapeutic modalities. This activity describes the evaluation and management of patients with medulloblastoma and highlights the role of the interprofessional team in improving care for affected children.
+
+Cursusbeschrijving
+Dit kwartaal ga je 2 modules volgen die je een goede basis geven in het ontwikkelen van een analyse pipeline die structurele varianten (bv. SNP's) kan identificeren en ook annoteren. Hierbij maak je in de eerste module van 5 EC gebruik van de wetenschappelijk workflow manager Galaxy. In deze module ligt de nadruk meer op het uitvoeren van een aantal voorgedefineerde stappen om de analyse te doen en zo kennis te maken met de verschillende onderdelen. Nadat je een idee hebt van hoe de analyse uitgevoerd kan worden, ga je in de 2de module van 10EC een analyse pipeline ontwerpen en implementeren in de programmeer taal R. Hiervoor zijn een aantal wetenschappelijke publicaties beschikbaar met bijhorende datasets.
+
+In de 5 EC module (2.1.1 NGS_en_Genetics) ga je in kleine groepjes werken aan een casus waarin je een ziekte onderzoekt die een genetische basis heeft. Je gaat in Galaxy een pipeline maken die voor deze ziekte kan voorspellen of een patient mogelijk variaties in zijn genoom heeft die gelinkt kunnen worden aan de ziekte. Tijdens deze module worden de verschillende onderwerpen praktisch uitgevoerd met kleine deelopdrachten. Hierbij ligt de nadruk op kennismaking met de verschillende soorten NGS-data en hun bijbehorende technieken, het uitvoeren van een gedegen kwaliteitscontrole en mapping tegen een referentie genoom.
+Daarnaast zal je ook uitgebreid gaan kennismaking met de achterliggende theorie. Hierbij wordt aandacht besteed aan de basis genetica (gen variatie, genregulatie) voor moderne NGS-technieken, de verschillende vormen van structurele variatie en de achtergrond van transcriptomics onderzoek. Om jouw kennis te testen over deze onderwerpen zal er aan het eind van de module een theoretische toets worden afgenomen.
+
+Het doel van deze course is om te leren een pipeline te ontwikkelen, met behulp van Galaxy, die voor een ziekte kan voorspellen of een patiënt mogelijk variaties heeft in zijn genoom die aan de ziekte kunnen worden gelinkt. Ik heb samen met mijn groepsgenoot gekozen voor medulloblastoma als aandoening. De reden dat wij hiervoor hebben gekozen is (insert statistieken etc)
+
+Vragen die ik wil onderzoeken zijn o.a. welke SNP's er zijn bij medulloblastoma en welke tools wij het beste kunnen gebruiken in Galaxy. Er zijn namelijk allerlei tools beschikbaar, maar niet alle tools passen goed bij dit onderzoek.
+
+Voor deze analyse zullen wij de medulloblastome DNA-seq data (MB-DNASeq) gebruiken. Deze is terug te vinden op het BIN-netwerk in de volgende locatie: /commons/Themas/Thema05/2024/
+Deze data is 
+
+De tools die worden gebruikt zijn de wetenschappelijke workflow manager Galaxy, voor de analyse. R voor het noteren en bijhouden van de bevindingen als logboek, en Github voor het delen van bestanden.  
+
+what the goal of this course is
+what is the disease you are looking into?
+what question(s) do we want to answer?
+the tools we will be using
+what is this Galaxy website? follow a tutorial to get familiar with it
+what kind of tools are available in Galaxy?
+the data which we will use throughout this course
+how is this data generated?
+which analysis steps are needed to answer our research question?
+
+
+Report on the number of reads that where removed for each data set.
+Create new FastQC plots of the Per Base Sequence Quality (on the cleaned, paired data).
+Compare the plots with the original uncleaned data and report on the differences.
+Perform multiple FASTQ cleaning runs (each time on the original data!).
+Change a setting and report on the number of reads removed.
+Create and save the Per Base Sequence Quality plots for each run.
+Report (in a table for instance) what the effect is of each setting in the Trimmomatic tool.
+Pick the best (combination of) settings and copy the R1 and R2 trimmed data sets to a new history in Galaxy, this data will be used for the next analysis step.
+Please remove any unused output of Trimmomatic from the previous history, as this might take up a few gigabytes of space. If you delete these files (they can also be ‘undeleted’) they are just marked for actual deletion after a few months.
+
+## **Tool Parameters**
+
+| Input Parameter                                                                                         | Value                                       |
+|---------------------------------------------------------------------------------------------------------|---------------------------------------------|
+| Single-end or paired-end reads?                                                                         | pair_of_files                               |
+| Input FASTQ file (R1/first of pair)                                                                     | 1: SRR26913190_1.fastq.gz                   |
+| Input FASTQ file (R2/second of pair)                                                                    | 2: SRR26913190_2.fastq.gz                   |
+| Perform initial ILLUMINACLIP step?                                                                      | 1                                           |
+| Select standard adapter sequences or provide custom?                                                    | standard                                    |
+| Adapter sequences to use                                                                                | TruSeq3 (paired-ended, for MiSeq and HiSeq) |
+| Maximum mismatch count which will still allow a full match to be performed                              | 2                                           |
+| How accurate the match between the two 'adapter ligated' reads must be for PE palindrome read alignment | 30                                          |
+| How accurate the match between any adapter etc. sequence must be against a read                         | 10                                          |
+| Minimum length of adapter that needs to be detected (PE specific/palindrome mode)                       | 8                                           |
+| Always keep both reads (PE specific/palindrome mode)?                                                   | 1                                           |
+| Select Trimmomatic operation to perform                                                                 | SLIDINGWINDOW                               |
+| Number of bases to average across                                                                       | 4                                           |
+| Average quality required                                                                                | 20                                          |
+| Select Trimmomatic operation to perform                                                                 | MINLEN                                      |
+| Minimum length of reads to be kept                                                                      | 40                                          |
+| Output trimlog file?                                                                                    | 0                                           |
+| Output trimmomatic log messages?                                                                        | 0                                           |
