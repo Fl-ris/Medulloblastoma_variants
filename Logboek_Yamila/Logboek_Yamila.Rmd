@@ -14,10 +14,16 @@ editor_options:
   markdown: 
     wrap: 72
 ---
+
 ```{r}
 library(dplyr)
-
+library(trackViewer)
+library(plotrix)
+library(GenomicRanges)
+library(Rsamtools)
 ```
+
+
 # Voorbereiding
 
 ## Het doel/opzet van de cursus
@@ -120,10 +126,11 @@ workflow manager. De tutorial die ik hiervoor heb gebruikt is '*Galaxy
 Basics for genomics*', afkomstig van de volgende website:
 <https://galaxyproject.github.io/training-material/topics/introduction/tutorials/galaxy-intro-101/tutorial.html>
 
-In deze tutorial heb ik geleerd om: - Een history aan te maken -
-Bestanden in te laden - Tools te gebruiken (datamash, intersect
-intervals, sort, select first, compare two datasets) - Een history om te
-zetten naar een workflow
+In deze tutorial heb ik geleerd om: 
+
+- Een history aan te maken 
+- Bestanden in te laden 
+- Tools te gebruiken (datamash, intersect intervals, sort, select first, compare two datasets) - Een history om te zetten naar een workflow
 
 # Quality Control met Galaxy
 
@@ -135,7 +142,7 @@ Forward en reverse read van sample 5:
 -   SRR26913194_2.fastq
 
 | Input Parameter                                                     | Value                     |
-|-------------------------------------------------|-----------------------|
+|-----------------------------------------------|-------------------------|
 | Raw read data from your current history                             | 1: SRR26913194_1.fastq.gz |
 | Contaminant list                                                    |                           |
 | Adapter list                                                        |                           |
@@ -145,7 +152,7 @@ Forward en reverse read van sample 5:
 | Length of Kmer to look for                                          | 7                         |
 
 | Input Parameter                                                     | Value                     |
-|-------------------------------------------------|-----------------------|
+|-----------------------------------------------|-------------------------|
 | Raw read data from your current history                             | 1: SRR26913194_2.fastq.gz |
 | Contaminant list                                                    |                           |
 | Adapter list                                                        |                           |
@@ -166,7 +173,7 @@ Trimmomatic tool, deze pas ik toe op SRR26913194_1.fastq.gz en
 SRR26913194_2.fastq.gz (paired-end), met de volgende parameters:
 
 | Input Parameter                                                                                         | Value                                       |
-|-----------------------------------------------|------------------------|
+|----------------------------------------------|--------------------------|
 | Single-end or paired-end reads?                                                                         | pair_of_files                               |
 | Input FASTQ file (R1/first of pair)                                                                     | 1: SRR26913190_1.fastq.gz                   |
 | Input FASTQ file (R2/second of pair)                                                                    | 2: SRR26913190_2.fastq.gz                   |
@@ -373,12 +380,12 @@ niet!), zodat andere tools de duplicates zullen negeren.
 
 # IGV
 
-Met behulp van IGV ga ik opzoek naar een variant in een gen dat ik heb gekozen uit het genpanel, namelijk ABL1. 
-
+Met behulp van IGV ga ik opzoek naar een variant in een gen dat ik heb
+gekozen uit het genpanel, namelijk ABL1.
 
 **Gegevens gevonden variant**:
 
-```
+```         
 chr9:130.885.614
 Total count: 926
 A : 502 (54%, 266+, 236- )
@@ -387,23 +394,33 @@ G : 423 (46%, 244+, 179- )
 T : 0
 N : 0
 ```
-De patiënt is heterozygoot voor het allel voor dit gen, dit is te zien aan dat zowel de base A, als T ongeveer 50% voorkomen. De variant bevindt zich aan een exon, dit is te zien aan dat er een bijbehorende referentiesequentie wordt weergegeven onder de data van de patiënt.
 
-Het variant codeert normaal, volgens de referentiesequentie, samen met 2 andere basen (samen CCA) voor het aminozuur proline. Bij de data van de patiënt komen 2 verschillende sequenties voor, namelijk CCA en CCG. Zowel CCG als CCA coderen voor het aminozuur proline, er is dus sprake van een silent of 'synonymous' mutatie. 
+De patiënt is heterozygoot voor het allel voor dit gen, dit is te zien
+aan dat zowel de base A, als T ongeveer 50% voorkomen. De variant
+bevindt zich aan een exon, dit is te zien aan dat er een bijbehorende
+referentiesequentie wordt weergegeven onder de data van de patiënt.
 
+Het variant codeert normaal, volgens de referentiesequentie, samen met 2
+andere basen (samen CCA) voor het aminozuur proline. Bij de data van de
+patiënt komen 2 verschillende sequenties voor, namelijk CCA en CCG.
+Zowel CCG als CCA coderen voor het aminozuur proline, er is dus sprake
+van een silent of 'synonymous' mutatie.
 
-![Overzicht van het gevonden variant in gen ABL1, in IGV](igv_variant.png)
+![Overzicht van het gevonden variant in gen ABL1, in
+IGV](igv_variant.png)
 
 # Analyse van varianten
 
 Soorten files:
-- BED-file: beschrijft de locaties van de exons
-- BAM-file: bevat de gemapte reads
-- VCF-file: bevat alle gevonden varianten
+
+-   BED-file: beschrijft de locaties van de exons
+-   BAM-file: bevat de gemapte reads
+-   VCF-file: bevat alle gevonden varianten
 
 Inladen BED-data
+
 ```{r exons_per_chromosome_barplot}
-bed_data <- read.table("Galaxy21-[medulloblastoma_gene_panel_V3_ucsc.bed].bed")
+(bed_data <- read.table("Galaxy21-[medulloblastoma_gene_panel_V3_ucsc.bed].bed"))
 
 names(bed_data) <- c("chrom", "chromStart", "chromEnd", "gene")
 
@@ -414,8 +431,8 @@ barplot(exons_per_chromosome, las = 2, ylab = "Number of exons", xlab = "Chromos
 
 ```
 
-Uit bovenstaande plot is de verdeling van exonen per chromosoom te zien, hierbij valt op dat chromosoom 9 en 12 de meeste exonen hebben.
-
+Uit bovenstaande plot is de verdeling van exonen per chromosoom te zien,
+hierbij valt op dat chromosoom 9 en 12 de meeste exonen hebben.
 
 ```{r}
 # Maakt een dataframe van alleen de kolommen 'chrom' en 'gene' van bed_data
@@ -431,4 +448,526 @@ gene_count <- table(unique_genes$chrom)
 barplot(gene_count, las = 2, ylab = "Number of genes", xlab = "Chromosome")
 
 ```
-Uit bovenstaande figuur kan het aantal genen per chromosoom worden afgelezen. Hieruit blijkt dat zowel chromosoom 12 als chromosoom 9 relatief veel genen bevatten, dit was te verwachten aan de hand van de resultaten uit de eerdere grafiek met de exonen. Echter blijkt dat ook chromosoom 1 relatief veel genen bevat, terwijl dit minder exonen had dan chromosoom 9 en 12. Dit kan te verklaren zijn doordat chromosoom 1 misschien genen bevat met relatief weinig exonen.
+
+Uit bovenstaande figuur kan het aantal genen per chromosoom worden
+afgelezen. Hieruit blijkt dat zowel chromosoom 12 als chromosoom 9
+relatief veel genen bevatten, dit was te verwachten aan de hand van de
+resultaten uit de eerdere grafiek met de exonen. Echter blijkt dat ook
+chromosoom 1 relatief veel genen bevat, terwijl dit minder exonen had
+dan chromosoom 9 en 12. Dit kan te verklaren zijn doordat chromosoom 1
+misschien genen bevat met relatief weinig exonen.
+
+IRange: manier om een regio in een sequentie aan te geven, met start en
+stopcoordinaten GenomicRanges: start en stopcoordinaten,
+chromosoomnummer en welke streng (+/-)
+
+IRange gebruiken om BED-file data op te slaan:
+
+```{r}
+# Print all rows where the gene name is for example 'SOD2'
+bed_data[bed_data$gene == "EZH2", ]
+
+# Get the data as a subset of the cardiopanel data
+ezh2 <- bed_data[bed_data$gene == "EZH2", ]
+
+# Assign whole columns to the IRanges arguments
+ranges <- IRanges(start = ezh2$chromStart,
+                  end = ezh2$chromEnd,
+                  names = ezh2$gene)
+# Print the object
+ranges
+
+```
+
+```{r}
+# Calculate and print the length of a gene
+cat("Length of EZH2:", sum( width(ranges) ), "bp")
+
+```
+
+```{r}
+# Converts iRanges to GRanges, adding the chromosome name
+granges <- GRanges(seqnames = ezh2$chrom,
+                   ranges = ranges)
+granges
+
+```
+
+IRange: - Geeft chromStart en chromEnd aan en berekent hiermee de width
+of de lengte van een gen GRange: - geeft aan op welk chromosoom het gen
+ligt
+
+Functions such as width() applied to an IRanges object gives the width
+column and the ranges() function applied to a GRanges object gives the
+IRanges object contained within.
+
+This more challenging assignment results in yet another type of object,
+named a GRangesList that contains multiple GRanges objects; one for each
+gene such as shown in the above example. So, in order to do that we need
+to:
+
+Create an empty (standard) R list, Iterate over all of our genes in the
+BED file, Read the part about iteration below and the hints about the
+split function to get the gene names and data easily accessible. For
+each gene, create a GRanges object and add it to the list, including the
+gene name (use the following form: my_list[[gene_name]] \<- data) and
+Convert the complete list into a GRangesList object. Use the conversion
+as explained in the GRanges manual: bed_data \<- GRangesList(bed_data)
+given that the list is called bed_data.
+
+my_list \<- list(comp1, comp2 ...)
+
+```{r}
+# aanmaken lege lijst
+gene_list <- list()
+
+# opsplitten data per gen, geeft losse dataframe per gen
+bed_splitted <- split(bed_data, bed_data$gene)
+
+
+for (gene in names(bed_splitted)) {
+
+    # gene_data neemt de waarde aan van de bed_data rijen waarvan het gen gelijk is aan het gen in names(bed_splitted)
+  
+    gene_data <- bed_data[bed_data$gene == gene, ]
+    
+    # creeeren van Irange voor elk gen, door chromstart, end en gene mee te geven
+    ranges <- IRanges(start = gene_data$chromStart,
+                      end = gene_data$chromEnd,
+                      names = gene_data$gene)
+    
+    
+    # lengte printen
+    #cat("Length of", gene, ":", sum( width(ranges) ), "bp.\n")
+    
+    # GRange aanmaken voor elk gen, door chrom mee te geven
+    granges <- GRanges(seqnames = gene_data$chrom,
+                       ranges = ranges)
+    
+    # GRanges toevoegen per gen
+    gene_list[[gene]] <- granges
+    
+    
+
+}
+
+gene_list <- GRangesList(gene_list)
+
+
+gene_list
+```
+
+```{r}
+# Check the length (in basepairs) of a single gene (exons only)
+ranges_width <- ranges(gene_list)
+ranges_width <- sum(width(ranges_width))
+summary(ranges_width)
+hist(ranges_width)
+```
+
+```{r}
+# lage waarden zijn weg
+# 0 staat niet bij de oorsprong
+gap.barplot(ranges_width, gap=c(12000, 18000), las=2, ylab = "lengte v.h. gen", xlab = "Index v.h. gen")
+
+
+gap.barplot(ranges_width, gap=c(10000, 10001), las=2, ylab = "lengte v.h. gen", xlab = "Index v.h. gen")
+```
+
+
+```{r}
+#BamFile
+#Create a BamFile object by providing both the file and index parameters
+
+bam_file <- BamFile("Galaxy5-[MarkDuplicates_on_data_1__MarkDuplicates_BAM_output].bam", index="Galaxy5-[MarkDuplicates_on_data_1__MarkDuplicates_BAM_output].bai")
+```
+
+```{r}
+#ScanBamParam: Sets the parameters for selecting a certain region from the genome using GRanges (i.e., a gene from our BED-data)
+
+(abl1 <- gene_list[["ABL1"]])
+
+abl1_region <- ScanBamParam(which = abl1)
+
+
+```
+
+```{r}
+#pileup: Actually retrieves the region of interest given the BamFile and parameters supplied.
+abl1_df <- pileup(file = bam_file, scanBamParam = abl1_region)
+head(abl1_df)
+```
+
+```{r}
+# create empty list
+pileup_list <- list()
+
+
+# iterate over BED-data (Granges)
+for (gene_name in names(gene_list)) {
+
+ # get pileup data for each gene by creating scanbamparam
+ gene_region <- gene_list[[gene_name]]
+ scan_region <- ScanBamParam(which = gene_region)
+
+ # executing pileup function
+ gene_df <- pileup(file = bam_file, scanBamParam = scan_region)
+ 
+ # add pileup data to list
+ pileup_list[[gene_name]] <- gene_df
+
+}
+
+```
+
+```{r}
+head(pileup_list[["ABL1"]])
+
+```
+
+```{r}
+
+coverage <- list()
+
+for (gene_name in names(pileup_list)) {
+  
+coverage[[gene_name]] = aggregate(x = list(count=pileup_list[[gene_name]]$count), 
+                     by = list(pos=pileup_list[[gene_name]]$pos), FUN=sum)
+
+}
+
+```
+
+```{r}
+mean(coverage[["AKT3"]]$count)
+
+```
+
+```{r}
+ranges
+
+sum( width(ranges) )
+```
+
+```{r}
+(length <- tail(coverage[["ABL1"]]$pos, 1) - coverage[["ABL1"]]$pos[1])
+
+```
+
+```{r}
+# Tell R not to complain...
+options(stringsAsFactors = FALSE)
+
+# Create empty data-frame, but specify columns and data types
+coverage_df <- data.frame(length=integer(), avg_coverage=numeric(), low_coverage=integer(), low_coverage_perc=numeric())
+
+for (gene_name in names(gene_list)){
+  
+length <- tail(coverage[[gene_name]]$pos, 1) - coverage[[gene_name]]$pos[1]
+avg_coverage <- round(mean(coverage[[gene_name]]$count), 1)
+low_coverage <- sum(coverage[[gene_name]]$count < 30)
+low_coverage_perc <- round(low_coverage/(sum(coverage[[gene_name]]$count)) * 100, 1)
+
+
+# Create a new row of data, stored as a named list (important)
+coverage_df <- rbind(coverage_df, list(gene_name=gene_name, length=length , avg_coverage=avg_coverage, low_coverage=low_coverage, low_coverage_perc=low_coverage_perc ))
+
+
+}
+
+head(coverage_df)
+
+```
+
+```{r}
+# to further inspect low coverage genes
+for (gene_name in coverage_df){
+  
+  low_coverage_genes <- coverage_df$gene_name[coverage_df$low_coverage_perc > 0.7]
+}
+```
+
+Alle genen waarbij de 'low coverage percentage' hoger was dan 0.7, zijn
+toegevoegd aan de lijst 'low_coverage_genes', de lijst bevat de volgende
+genen:
+
+```{r}
+low_coverage_genes_info <- list()
+
+for (gene in low_coverage_genes){
+  low_coverage_genes_info[[gene]] <- subset(coverage_df, gene_name == gene)
+  
+}
+
+# laat info zien over de 3 genen met lage coverage
+low_coverage_genes_info
+```
+
+Deze genen dienen nader geïnspecteerd te worden met IGV
+
+# LoFreq
+
+| Input Parameter                            | Value                                                    |
+|-------------------------------|-----------------------------------------|
+| Input reads in BAM format                  | 20: MarkDuplicates on data 14: MarkDuplicates BAM output |
+| Choose the source for the reference genome | cached                                                   |
+| Reference genome                           | hg38                                                     |
+| Call variants across                       | genome                                                   |
+| Types of variants to call                  | Only SNVs                                                |
+| Variant calling parameters                 | 0                                                        |
+| Variant filter parameters                  | set_lofreq_standard                                      |
+| sig                                        | 0.01                                                     |
+| bonf                                       | dynamic                                                  |
+| others                                     | Empty.                                                   |
+
+```{r, eval=FALSE}
+# Inlezen data
+
+lofreq_data <- read.table(file = "..\\Data\\medulloblastoma_variant_detection.vcf")
+
+# Hernoemen kolommen
+names(lofreq_data) <- c("chrom", "pos", "ID", "ref", "alt", "count", "filter", "lofreq")
+
+# Opsplitsen data in lofreq kolom
+lofreq_data <- lofreq_data %>%
+  separate(lofreq, 
+           into = c("DP", "AF", "SB", "DP4"),
+           sep = ";")
+
+```
+
+```{r}
+# Haalt string "AF="  weg van AF data
+lofreq_data$AF <- gsub("AF=", "", lofreq_data$AF)
+
+# Zet datatype van AF-kolom om naar numeric
+AF_data <- as.numeric(lofreq_data$AF)
+```
+
+```{r}
+# Ranges aanmaken
+ranges <- IRanges(start = lofreq_data$pos,
+                  end = lofreq_data$pos)
+
+# GRanges aanmaken
+variant_granges <- GRanges(seqnames = lofreq_data$chrom,
+                   ranges = ranges)
+
+# Filter AF_data op waarden boven 0.3
+lofreq_data$AF <- gsub("AF=", "", lofreq_data$AF)
+
+
+#AF_data <- AF_data[AF_data > 0.3]
+
+# Voegt AF_kolom bij variant_granges
+mcols(variant_granges) <- DataFrame(AF= AF_data)
+
+
+```
+
+```{r}
+overlaps <- data.frame(findOverlaps(variant_granges, gene_list))
+
+# Rijen die na filterstappen zijn overgebleven (dus varianten die voorkomen in exonen én een allele frequency van hoger dan 30% heeft), de +17 is om rekening te houden met de header lines
+intersect_rows <- intersect(overlaps$queryHits, which(variant_granges$AF >= 0.3))+17
+
+```
+
+```{r}
+unfiltered_vcf <- readLines("..\\Data\\medulloblastoma_variant_detection.vcf")
+
+filtered_vcf <- unfiltered_vcf[intersect_rows]
+
+write(filtered_vcf, file = "filtered_data.vcf")
+```
+
+**queryhits**: de varianten (die binnen een gen liggen) **subjecthits**:
+het gen
+
+```{r}
+
+variants_filtered <- variant_granges[overlaps$queryHits]
+
+
+
+hist(variants_filtered$AF, breaks = 20)
+```
+
+**Conclusie figuur**
+
+De allelfrequentie (AF) bij de overgebleven varianten ligt grotendeels
+rond de 50% en rond de 100%. Dit kan wijzen op varianten die heteryzgoot
+zijn voor de variant (1 allel dat overeenkomt met ref_gen en 1 allel met
+variant) en op varianten die homozygoot zijn voor de variant, waar de
+variant dus 100% van de reads voorkomt.
+
+```{r}
+# maak dataframe van de subjecthits
+genes_freq <- data.frame(table(overlaps$subjectHits))
+
+# vervang kolomnamen
+names(genes_freq) <- c("gene", "freq")
+
+# haal alle gennamen op uit bed_data
+genes <- unique(bed_data$gene)
+
+# gebruik indices om gennamen voor gefilterde genen uit genes te halen
+genes_freq$gene <- genes[genes_freq$gene]
+
+```
+
+```{r}
+# x-as genen niet zichtbaar
+
+genes_freq_subset <- subset(genes_freq, freq > 1)
+genes_freq_subset
+
+barplot(genes_freq_subset$freq, cex.names=0.5, names=genes_freq_subset$gene, las=2)
+
+```
+
+
+
+# Databases
+
+## ClinVar
+|INFO Tag|Comment|
+|---|---|
+|AF_ESP, AF_EXAC, AF_TGP|Allele frequency is reported in three tags, one for each source of data. AF_ESP reports allele frequency from GO-ESP. AF_EXAC reports allele from the ExAC Consortium. AF_TGP reports allele from the 1000 Genomes Project.|
+|ALLELEID|The ClinVar Allele ID for the variant|
+|CLNDNINCL|Used only for “included” variants. ClinVar's preferred disease name for an interpretation for a haplotype or genotype that includes this variant|
+|CLNDISDBINCL|Used only for “included” variants. The database name and identifier for the disease name for an interpretation for a haplotype or genotype that includes this variant. Multiples are separated by a pipe|
+|CLNHGVS|The top-level genomic HGVS expression for the variant. This may be on an accession for the primary assembly or on an ALT LOCI|
+|CLNSIGINCL|Used only for “included” variants. The clinical significance of a haplotype or genotype that includes this variant. It is reported as pairs of Variation ID for the haplotype or genotype and the corresponding clinical significance|
+|CLNVI|Identifiers for the variant in other databases, e.g. OMIM Allelic variant IDs|
+|CLNVC|The type of variation, using terms from Sequence Ontology|
+|CLNVCSO|The Sequence Ontology identifier for the type of variation|
+|MC|The predicted molecular consequence of the variant. It is reported as pairs of the Sequence Ontology (SO) identifier and the molecular consequence term joined by a vertical bar. Multiple values are separated by a comma. This tag replaces ASS, DSS, INT, NSF, NSM, NSN, R3, R5, SYN, U3, and U5 in the old format|
+
+https://www.ebi.ac.uk/ols4/search?q=medulloblastoma&ontology=mondo voor mondo
+MONDO:0007959 = medulloblastoma
+
+
+CLNDISDB (ClinVar Disease Database): Dit veld bevat links naar medische databases zoals OMIM, MedGen, MONDO, etc., waarin ziekte-informatie beschikbaar is
+Clinvar
+CLNDN=Joubert_syndrome_32|Medulloblastoma|Gorlin_syndrome|not_specified|not_provided|Familial_meningioma;CLNHGVS=NC_000010.11:g.102627262T>C;CLNREVSTAT=criteria_provided,_multiple_submitters,_no_conflicts;CLNSIG=Benign;CLNVC=single_nucleotide_variant;CLNVCSO=SO:0001483;CLNVI=ClinGen:CA5667986;GENEINFO=SUFU:51684;MC=SO:0001627|intron_variant;ORIGIN=1;RS=12414407
+
+
+### Kolommen met allelfrequentie
+
+- AF = allelfrequentie van variant in de afgelezen reads
+- AF_ESP = allelfrequentie van variant in Exome Sequencing Project (ESP) database
+- AF_EXAC = allelfrequentie van variant in Exome Aggregation Consortium (ExAC) database
+- AF_TGP = allelfrequentie van variant in 1000 Genomes Project (TGP) database
+
+
+```{r}
+read.table("variants_step3.vcf")
+
+```
+
+
+CHROM POS ID REF ALT FILTER DP AF ANN[*].ALLELE ANN[*].EFFECT ANN[*].IMPACT ANN[*].GENE ANN[*].GENEID ANN[*].FEATURE ANN[*].FEATUREID ANN[*].BIOTYPE ANN[*].RANK ANN[*].HGVS_C ANN[*].HGVS_P ANN[*].CDNA_POS ANN[*].CDNA_LEN ANN[*].CDS_POS ANN[*].CDS_LEN ANN[*].AA_POS ANN[*].AA_LEN ANN[*].DISTANCE ANN[*].ERRORS CLNDISDB CLNDN CLNREVSTAT CLNVC CLNVCSO CLNVI CLNHGVS CLNSIG ORIGIN MC GENEINFO ALLELEID DP AF SB DP4
+
+
+CHROM POS ID REF ANN[*].GENE ALT AF_ESP AF_EXAC AF_TGP ANN[*].IMPACT CLNDN CLNSIG CLNVC CLNREVSTAT CLNHGVS
+
+mutation taster
+mutation assesor
+sift
+
+de data wordt ineenkeer dubbel na extract columns tool
+
+
+Belangrijke kolommen om te houden:
+
+- CLNDN disease name, filteren op medulloblastoma en/of andere ziekten die vaak samen voorkomen
+- AF (hoe hoger hoe beter)
+- AF databases (hoe lager hoe beter)
+- CLNREVSTAT review status, geeft aan hoe betrouwbaar
+- CLNVC  geeft aan om wat voor mutatie het gaat
+- CLNHGVS geeft variant id om verder info te zoeken op NCBI
+
+
+- **Kolom 1**: chromosoomnaam (chr)
+- **Kolom 2**: positie op het chromosoom (int)
+- **Kolom 3**: ID, een '.' betekent dat er geen ID is toegewezen (chr)
+- **Kolom 4**: referentiebase, A,C,G,T of N (chr)
+- **Kolom 5**: gevonden base, A,C,G,T of N (chr)
+- **Kolom 6**: kwaliteitsscore (Phred), '.' betekent dat er geen score is (chr)
+- **Kolom 7**: filter status, "PASS" betekent dat het variant het door alle filters (meegegeven argumenten) heeft gehaald en dus als variant is gecalled (chr)
+- **Kolom 8**: informatie over de data (chr):
+  - *ADP*: Average per-sample depth van basen met Phred-score >= 28
+  - *WT*: hoeveel van de samples geen variant heeft (gecalled met ref.gen)
+  - *HET*: hoeveel van de samples heterozygoot is gecalled voor het variant
+  - *HOM*: hoeveel van de samples homozygoot is gecalled voor het variant
+  - *NC*: hoeveel van de samples niet gecalled is
+- **Kolom 9**: geeft de format aan voor de informatie dat wordt gegeven voor de samples in de opvolgende kolommen, in dit geval sample 1 en 2 in kolom 10 en 11 (chr):
+  - *GT*: genotype **verder uitleggen**
+  - *GQ*: genotype quality
+  - *SDP*: raw read depth volgens SAMtools
+  - *DP*: quality read depth van basen met een Phred score >= 28
+  - *RD*: depth van basen die overeenkomen met referentiegenoom
+  - *AD*: depth van basen die afwijken van referentiegenoom (varianten)
+  - *FREQ*: variant allele frequency
+  - *PVAL*: P-value volgens Fisher's Exact Test
+  - *RBQ*: gemiddelde kwaliteit van basen die met referentiegenoom overeenkomen
+  - *ABQ*: gemiddelde kwaliteit van basen die van referentiegenoom afwijken (varianten)
+  - *RDF*: depth van basen die met referentiegenoom overeenkomen, op forward strand
+  - *RDR*: depth van basen die met referentiegenoom overeenkomen, op reverse strand
+  - *ADF*: depth van basen die van referentiegenoom afwijken (varianten), op forward strand
+  - *ADR*: depth van basen die van referentiegenoom afwijken (varianten), op reverse strand
+- **Kolom 10**: geeft informatie over sample 1, in het format van kolom 9 (chr)
+- **Kolom 11**: geeft informatie over sample 2, in het format van kolom 9 (chr)
+
+
+Li-Fraumeni syndrome
+Li-Fraumeni syndrome is caused by PVs in the TP53 gene. TP53 is apparently the best-studied tumor suppressor gene, which is involved in the regulation of DNA damage response, programmed cell death, cell cycle and several other biological processes. Population occurrence of TP53 germline heterozygosity is well below 1:10000, although some communities demonstrate a noticeable frequency of founder hypomorphic TP53 variants[5,6,142]. Earlier family-based studies suggested nearly-fatal penetrance for TP53 germline PVs, although recent data indicate that some carriers of TP53 pathogenic alleles manage to achieve late adulthood without being affected by cancer disease[8].
+
+TP53 PVs render a highly increased risk of childhood cancers. Li-Fraumeni syndrome-associated pediatric malignancies include adrenal cortical carcinomas, choroid plexus carcinomas, rhabdomyosarcomas and medulloblastomas. Adult cancers are mainly represented by very-young-onset BC in females as well as lung carcinomas, osteosarcomas, soft-tissue sarcomas and brain tumors[8,63,143]. Breast carcinomas arising in TP53 PV carriers frequently carry HER2 amplification[144]. Li-Fraumeni syndrome related lung carcinomas are characterized by an exceptionally high frequency of EGFR somatic mutations[129,145]. Carriers of TP53 PVs also have highly elevated risk of hematological malignancies[146]. The analysis of specific groups of consecutive patients revealed that Li-Fraumeni syndrome is a significant contributor to the incidence of pediatric cancers, very-young-onset breast carcinomas and osteosarcomas[142,146-150].
+
+https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9993141/
+
+
+Genen die in de data terug te vinden zijn:
+- SMARCA4
+- TP53
+- BRCA2
+- PTCH1
+- APC
+- SUFU
+- MSH6
+
+
+```{r}
+# maak dataframe van de subjecthits
+genes_freq <- data.frame(table(overlaps$subjectHits))
+
+# vervang kolomnamen
+names(genes_freq) <- c("gene", "freq")
+
+# haal alle gennamen op uit bed_data
+genes <- unique(bed_data$gene)
+
+# gebruik indices om gennamen voor gefilterde genen uit genes te halen
+genes_freq$gene <- genes[genes_freq$gene]
+
+```
+
+```{r}
+features <- bed_data[bed_data$gene == "CDK6", ]
+overlaps$Gene <- names(gene_list)[overlaps$subjectHits]
+
+sample.gr <- variants_filtered[unlist(subset(overlaps, Gene == "CDK6", select = queryHits))]
+
+sample.gr$score <- sample.gr$AF * 100
+```
+
+```{r}
+lolliplot(sample.gr, features, ylab = "Allele Frequency (%)")
+
+```
+
+
+https://www.tandfonline.com/doi/full/10.2217/fnl-2018-0030#:~:text=The%20most%20prevalent%20among%20those,not%20exclusive%20to%20WNT%20MB.
+
